@@ -1,0 +1,4 @@
+threshold_label,threshold_epss,caught_at_dateAdded_count,available_at_dateAdded,caught_at_dateAdded_pct,caught_at_asof_count,available_at_asof,caught_at_asof_pct,asof_date
+0.1%,0.001,132,203,65.02,200,202,99.01,2025-12-29
+1.0%,0.01,78,203,38.42,181,202,89.6,2025-12-29
+10.0%,0.1,55,203,27.09,135,202,66.83,2025-12-29
