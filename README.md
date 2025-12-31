@@ -4,6 +4,8 @@
 **Affiliation:** CyberOK
 **Year:** 2025
 
+(Full Paper)[https://github.com/scadastrangelove/kev_vs_epss/blob/main/Prediction_Meets_Patch_Queues__Empirical_Limits_of_EPSS_Only_Prioritization_Using_CISA_KEV_Additions_in_2025.pdf]
+
 This repository contains data, scripts, and analytical artifacts used to evaluate the **predictive power and operational applicability of EPSS (Exploit Prediction Scoring System)** when compared against **confirmed real-world exploitation**, as represented by **CISA’s Known Exploited Vulnerabilities (KEV) catalog**.
 
 The work focuses on **2025 vulnerabilities** and answers two practical questions:
