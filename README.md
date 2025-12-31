@@ -221,7 +221,7 @@ It is **not** intended to replace threat intelligence, asset context, or expert 
 
 If you reference this work:
 
-> Gordeychik, S. (2025). *Evaluating EPSS as a Predictive Signal Against Confirmed Exploitation (KEV 2025)*. 
+> Gordeychik, S. (2025). *Prediction Meets Patch Queues: Empirical Limits of EPSS-Only Prioritization Using CISA KEV Additions in 2025*. 
 
 ---
 
