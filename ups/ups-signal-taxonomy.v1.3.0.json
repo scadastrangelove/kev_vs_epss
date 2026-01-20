@@ -1,0 +1,1056 @@
+{
+  "schema": "ups-signal-taxonomy",
+  "version": "1.3.0",
+  "generated_at": "2026-01-05",
+  "purpose": "Vendor-neutral taxonomy of signal types that contribute to Urgent Patch Score (UPS) timelines and scoring. Signal types are source-agnostic; sources are captured per event instance (vendor/feed/url/confidence).",
+  "design_principles": [
+    "Vendor-neutral signal_type names; source attribution lives in signal events.",
+    "Prefer earliest verifiable timestamp per signal_type for 'first_seen'.",
+    "Avoid double counting by applying group caps and/or deduplication rules.",
+    "Separate 'publication_time' from 'event_time' when sources provide both.",
+    "Exploitability/ITW evidence should dominate predictive/buzz signals."
+  ],
+  "scoring_guidance": {
+    "recommended_thresholds": {
+      "watch": 5,
+      "track": 7,
+      "prepare": 9,
+      "urgent_patch": 10,
+      "emergency": 14,
+      "ir_mode": 17
+    },
+    "group_caps": {
+      "exploitation_claims": 8,
+      "campaign_context": 5,
+      "exploit_maturity": 6,
+      "scanner_validation": 3,
+      "defensive_signatures": 3,
+      "external_telemetry": 4,
+      "exposure_reachability": 4,
+      "compromise_evidence": 6,
+      "remediation_dynamics": 3,
+      "predictive_signals": 2,
+      "buzz_interest": 1
+    },
+    "deduplication_rules": [
+      "Within a group, count only the highest-weight signal_type per 24h window unless sources are independent and add new evidence (e.g., new IoC sets).",
+      "Treat reposts/syndications as the same source_family; keep only the earliest publication_time.",
+      "If EXPLOITED_CATALOG_ADDED exists with due_date, do not separately add a second 'directive' signal for the same catalog."
+    ]
+  },
+  "timestamp_semantics": {
+    "first_seen": "Earliest time the signal is publicly available or observable in telemetry.",
+    "most_recent": "Most recent time the signal is observed/updated.",
+    "publication_time": "Time the source published the information (blog post, advisory, rule release).",
+    "event_time": "Time the underlying activity occurred (e.g., exploitation began), if explicitly stated by the source.",
+    "measurement_time": "Time an exposure/scan/telemetry measurement was taken, if distinct from publication_time."
+  },
+  "confidence_scale": {
+    "range": [
+      0.0,
+      1.0
+    ],
+    "bands": [
+      {
+        "min": 0.9,
+        "max": 1.0,
+        "label": "primary / authoritative / direct evidence"
+      },
+      {
+        "min": 0.7,
+        "max": 0.89,
+        "label": "credible secondary / corroborated"
+      },
+      {
+        "min": 0.4,
+        "max": 0.69,
+        "label": "plausible OSINT / partial evidence"
+      },
+      {
+        "min": 0.1,
+        "max": 0.39,
+        "label": "weak proxy / noisy indicator"
+      }
+    ]
+  },
+  "event_instance_schema": {
+    "required_fields": [
+      "subject_id",
+      "subject_type",
+      "signal_type",
+      "group",
+      "ts",
+      "source"
+    ],
+    "subject_types": [
+      "cve",
+      "bdu",
+      "vendor_advisory",
+      "misconfig",
+      "campaign"
+    ],
+    "ts": "Use publication_time if available; otherwise first_seen. Store event_time separately when available.",
+    "source": {
+      "required_fields": [
+        "vendor",
+        "feed",
+        "url_or_ref",
+        "confidence"
+      ],
+      "optional_fields": [
+        "source_family",
+        "title",
+        "author",
+        "retrieved_at"
+      ]
+    },
+    "example": {
+      "subject_id": "CVE-2025-59718",
+      "subject_type": "cve",
+      "signal_type": "EXPLOITED_CATALOG_ADDED",
+      "group": "exploitation_claims",
+      "ts": "2025-12-16T00:00:00Z",
+      "fields": {
+        "catalog": "KEV",
+        "date_added": "2025-12-16",
+        "due_date": "2025-12-23"
+      },
+      "source": {
+        "vendor": "CISA",
+        "feed": "KEV",
+        "url_or_ref": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
+        "confidence": 0.95,
+        "source_family": "gov_catalog"
+      }
+    }
+  },
+  "groups": [
+    {
+      "group": "exploitation_claims",
+      "description": "Authoritative claims of in-the-wild exploitation or inclusion in exploited-vuln catalogs."
+    },
+    {
+      "group": "campaign_context",
+      "description": "Context that increases urgency: ransomware/botnet activity, threat-actor association, exploit type, chaining."
+    },
+    {
+      "group": "exploit_maturity",
+      "description": "Availability, maturity and operationalization of exploit tooling (PoC/weaponized/framework/commercial)."
+    },
+    {
+      "group": "scanner_validation",
+      "description": "Presence and quality of validation checks in scanners and assessment tools."
+    },
+    {
+      "group": "defensive_signatures",
+      "description": "Availability of defensive detection/protection content (IDS/IPS/WAF/EDR rules)."
+    },
+    {
+      "group": "external_telemetry",
+      "description": "External observation of scanning/exploitation waves and telemetry-based confirmations."
+    },
+    {
+      "group": "exposure_reachability",
+      "description": "How reachable and prevalent the vulnerable surface is (org-specific exposure and public exposure estimates)."
+    },
+    {
+      "group": "compromise_evidence",
+      "description": "Evidence of compromise and post-exploitation artifacts/outcomes."
+    },
+    {
+      "group": "remediation_dynamics",
+      "description": "Patch/mitigation availability and dynamics that correlate with urgent risk (OOB, bypass, incomplete fix)."
+    },
+    {
+      "group": "predictive_signals",
+      "description": "Predictive/thermometric indicators (EPSS growth/acceleration) used as weak amplifiers."
+    },
+    {
+      "group": "buzz_interest",
+      "description": "Noisy attention signals; should not alone trigger urgent actions."
+    }
+  ],
+  "signals": [
+    {
+      "signal_type": "VULN_PUBLISHED",
+      "group": "remediation_dynamics",
+      "name": "Vulnerability published",
+      "description": "Baseline event: vulnerability record became publicly available (e.g., NVD published timestamp).",
+      "default_weight": 1,
+      "evidence_strength": "high",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "published_time"
+      ],
+      "fields_schema": {
+        "published_time": "datetime",
+        "source_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "RECORD_LAST_MODIFIED",
+      "group": "remediation_dynamics",
+      "name": "Record last modified",
+      "description": "Metadata update marker: record was updated (e.g., NVD lastModified). Used to trigger re-enrichment/recompute; not an urgency signal.",
+      "default_weight": 0,
+      "evidence_strength": "high",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "last_modified_time"
+      ],
+      "fields_schema": {
+        "last_modified_time": "datetime",
+        "source_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "EXPLOITED_CATALOG_ADDED",
+      "group": "exploitation_claims",
+      "name": "Added to exploited-vulnerability catalog",
+      "description": "Vulnerability added to any curated catalog/list of known exploited vulnerabilities (governmental or vendor/research).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "date_added",
+        "due_date_optional"
+      ],
+      "fields_schema": {
+        "catalog": "string",
+        "date_added": "date",
+        "due_date_optional": "date|null"
+      },
+      "notes": "Store catalog identity in fields.catalog (e.g., KEV, national CERT list, internal exploited list).",
+      "min_stage": "Urgent Patch"
+    },
+    {
+      "signal_type": "VENDOR_CONFIRMED_ITW",
+      "group": "exploitation_claims",
+      "name": "Vendor confirms exploitation in the wild",
+      "description": "Vendor advisory explicitly states active exploitation / exploited in the wild.",
+      "default_weight": 6,
+      "evidence_strength": "very_high",
+      "typical_lag": "variable",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "statement": "string|null",
+        "event_time_optional": "datetime|null"
+      },
+      "min_stage": "Emergency / IR"
+    },
+    {
+      "signal_type": "CERT_CSIRT_ALERT_ITW",
+      "group": "exploitation_claims",
+      "name": "CERT/CSIRT alert: active exploitation",
+      "description": "National/sectoral CERT/CSIRT reports active exploitation.",
+      "default_weight": 5,
+      "evidence_strength": "very_high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "severity_label_optional": "string|null",
+        "event_time_optional": "datetime|null"
+      },
+      "min_stage": "Emergency / IR"
+    },
+    {
+      "signal_type": "MDR_IR_CONFIRMED_INTRUSIONS",
+      "group": "exploitation_claims",
+      "name": "MDR/IR confirms real intrusions",
+      "description": "Incident-response/MDR provider reports observed intrusions exploiting the vulnerability, often with forensics and TTP.",
+      "default_weight": 6,
+      "evidence_strength": "very_high",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "victim_count_optional": "integer|null",
+        "event_time_optional": "datetime|null"
+      },
+      "min_stage": "Emergency / IR"
+    },
+    {
+      "signal_type": "ZERO_DAY_CLAIM_CREDIBLE",
+      "group": "exploitation_claims",
+      "name": "Credible 0-day claim",
+      "description": "Credible claim that exploitation occurred before patch/disclosure (0-day usage).",
+      "default_weight": 4,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "event_time_optional": "datetime|null",
+        "evidence_summary_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "RANSOMWARE_ASSOCIATION",
+      "group": "campaign_context",
+      "name": "Ransomware association",
+      "description": "Credible reporting that ransomware operators leverage the vulnerability (initial access or post-exploitation).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "family_optional": "string|null",
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "BOTNET_WORMABLE_ASSOCIATION",
+      "group": "campaign_context",
+      "name": "Botnet/wormable association",
+      "description": "Evidence of botnet or worm-like mass exploitation/propagation.",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "botnet_optional": "string|null",
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "NAMED_THREAT_ACTOR_ASSOCIATION",
+      "group": "campaign_context",
+      "name": "Named threat actor association",
+      "description": "Association with a known threat actor group (APT/crimeware), even if partial.",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "actor": "string",
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "EXPLOIT_TYPE_INITIAL_ACCESS",
+      "group": "campaign_context",
+      "name": "Exploit type: Initial Access",
+      "description": "The vulnerability is commonly used for initial access (entry point).",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "classification_time"
+      ],
+      "fields_schema": {
+        "exploit_type": "string",
+        "classification_time": "datetime"
+      },
+      "notes": "Other exploit types may be stored as attributes, but only Initial Access is a UPS amplifier by default."
+    },
+    {
+      "signal_type": "EXPLOIT_CHAIN_PRESENT",
+      "group": "campaign_context",
+      "name": "Exploit chain present",
+      "description": "Evidence that the vulnerability is used as part of a chain (e.g., auth bypass -> RCE).",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "chain_summary_optional": "string|null",
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "PUBLIC_POC_RELEASED",
+      "group": "exploit_maturity",
+      "name": "Public PoC released",
+      "description": "A publicly available proof-of-concept or reproducible exploit steps are published.",
+      "default_weight": 2,
+      "evidence_strength": "medium",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "first_published",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "poc_url": "string|null",
+        "first_published": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "WEAPONIZED_EXPLOIT_AVAILABLE",
+      "group": "exploit_maturity",
+      "name": "Weaponized exploit available",
+      "description": "Exploit packaged for operational use (reliable, low friction).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "first_published",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "tool_or_repo_optional": "string|null",
+        "first_published": "datetime",
+        "most_recent_optional": "datetime|null"
+      },
+      "min_stage": "Urgent Patch"
+    },
+    {
+      "signal_type": "FRAMEWORK_MODULE_AVAILABLE",
+      "group": "exploit_maturity",
+      "name": "Framework module available",
+      "description": "Exploit module exists in a major framework (e.g., Metasploit, other exploit frameworks).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "module_added_time",
+        "module_updated_time_optional"
+      ],
+      "fields_schema": {
+        "framework": "string",
+        "module_added_time": "datetime",
+        "module_updated_time_optional": "datetime|null"
+      },
+      "min_stage": "Urgent Patch"
+    },
+    {
+      "signal_type": "EXPLOIT_AVAILABILITY_COMMERCIAL",
+      "group": "exploit_maturity",
+      "name": "Commercial exploit availability",
+      "description": "Exploit available in commercial tooling/services (not necessarily public).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "vendor_optional": "string|null",
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "EXPLOIT_AVAILABILITY_PRIVATE_CREDIBLE",
+      "group": "exploit_maturity",
+      "name": "Private exploit availability (credible)",
+      "description": "Credible indication of private exploit availability without public PoC.",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "high",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null",
+        "notes_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "EXPLOIT_TIMELINE_STAGE_REACHED",
+      "group": "exploit_maturity",
+      "name": "Exploit timeline stage reached",
+      "description": "Timeline-type source indicates first occurrence of a stage (PoC, weaponized, exploitation evidence).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "stage",
+        "first_seen",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "stage": "string",
+        "first_seen": "datetime",
+        "most_recent_optional": "datetime|null"
+      },
+      "enums": {
+        "stage": [
+          "POC",
+          "WEAPONIZED",
+          "EXPLOITATION_EVIDENCE",
+          "WEAPONIZED_OR_HIGHER"
+        ]
+      }
+    },
+    {
+      "signal_type": "SCANNER_ACTIVE_CHECK",
+      "group": "scanner_validation",
+      "name": "Scanner active verification check",
+      "description": "Scanner implements an active check that verifies vulnerability state (not just version/banner).",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "plugin_published",
+        "plugin_updated_time_optional"
+      ],
+      "fields_schema": {
+        "scanner": "string",
+        "plugin_id_optional": "string|null",
+        "plugin_published": "datetime",
+        "plugin_updated_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "SCANNER_VERSION_ONLY_CHECK",
+      "group": "scanner_validation",
+      "name": "Scanner version/banner check",
+      "description": "Scanner coverage exists but relies on version/banner heuristics.",
+      "default_weight": 1,
+      "evidence_strength": "low_to_medium",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "plugin_published",
+        "plugin_updated_time_optional"
+      ],
+      "fields_schema": {
+        "scanner": "string",
+        "plugin_id_optional": "string|null",
+        "plugin_published": "datetime",
+        "plugin_updated_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "COMMUNITY_TEMPLATE_ACTIVE_CHECK",
+      "group": "scanner_validation",
+      "name": "Community template active check",
+      "description": "Community check/template performs active verification (e.g., nuclei/other DSL) beyond fingerprinting.",
+      "default_weight": 2,
+      "evidence_strength": "medium",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "first_published",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "project": "string",
+        "template_id_optional": "string|null",
+        "first_published": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "COMMUNITY_TEMPLATE_FINGERPRINT_ONLY",
+      "group": "scanner_validation",
+      "name": "Community template fingerprint-only",
+      "description": "Community check relies on banner/version/fingerprint heuristics only.",
+      "default_weight": 1,
+      "evidence_strength": "low",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "first_published",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "project": "string",
+        "template_id_optional": "string|null",
+        "first_published": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "IDS_IPS_SIGNATURE_PUBLISHED",
+      "group": "defensive_signatures",
+      "name": "IDS/IPS signature published",
+      "description": "Network IDS/IPS signature released (Snort/Suricata/ET/vendor IPS).",
+      "default_weight": 1,
+      "evidence_strength": "medium",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "rule_release_time",
+        "rule_updated_time_optional"
+      ],
+      "fields_schema": {
+        "engine": "string",
+        "rule_id_optional": "string|null",
+        "rule_release_time": "datetime",
+        "rule_updated_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "WAF_MANAGED_RULE_PUBLISHED",
+      "group": "defensive_signatures",
+      "name": "Managed WAF rule published",
+      "description": "Cloud/WAF vendor publishes managed rule coverage.",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "rule_release_time",
+        "rule_updated_time_optional"
+      ],
+      "fields_schema": {
+        "vendor_or_engine": "string",
+        "rule_release_time": "datetime",
+        "rule_updated_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "EDR_SIGMA_YARA_DETECTION_PUBLISHED",
+      "group": "defensive_signatures",
+      "name": "EDR/Sigma/YARA detection content published",
+      "description": "Host-based detection content released for post-exploitation artifacts or exploitation behaviors.",
+      "default_weight": 1,
+      "evidence_strength": "medium",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "rule_release_time",
+        "rule_updated_time_optional"
+      ],
+      "fields_schema": {
+        "format": "string",
+        "rule_id_optional": "string|null",
+        "rule_release_time": "datetime",
+        "rule_updated_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "HONEYPOT_EXPLOIT_ATTEMPTS",
+      "group": "external_telemetry",
+      "name": "Honeypot sees exploit attempts",
+      "description": "Honeypots/canaries observe exploit attempts matching the vulnerability.",
+      "default_weight": 2,
+      "evidence_strength": "high",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "first_seen",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "first_seen": "datetime",
+        "most_recent_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "SCAN_WAVE_INDICATOR",
+      "group": "external_telemetry",
+      "name": "Scan wave indicator",
+      "description": "Large-scale scanning targeting endpoints/ports/patterns linked to the vulnerability.",
+      "default_weight": 2,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "first_seen",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "first_seen": "datetime",
+        "most_recent_optional": "datetime|null",
+        "indicator_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "TELEMETRY_CONFIRMED_ITW",
+      "group": "external_telemetry",
+      "name": "Telemetry confirms exploitation in the wild",
+      "description": "Credible telemetry vendor reports exploitation in the wild (beyond mere scanning).",
+      "default_weight": 4,
+      "evidence_strength": "high",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "first_reported",
+        "most_recent_optional",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "first_reported": "datetime",
+        "most_recent_optional": "datetime|null",
+        "event_time_optional": "datetime|null"
+      },
+      "min_stage": "Emergency / IR"
+    },
+    {
+      "signal_type": "ORG_EXPOSURE_INTERNET_FACING_CONFIRMED",
+      "group": "exposure_reachability",
+      "name": "Org-specific internet-facing exposure confirmed",
+      "description": "Your inventory confirms vulnerable service/component is reachable from the Internet.",
+      "default_weight": 3,
+      "evidence_strength": "very_high",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "inventory_seen_time",
+        "last_confirmed_time_optional"
+      ],
+      "fields_schema": {
+        "inventory_seen_time": "datetime",
+        "last_confirmed_time_optional": "datetime|null",
+        "asset_count_optional": "integer|null"
+      }
+    },
+    {
+      "signal_type": "PUBLIC_EXPOSURE_MASS_COUNTS",
+      "group": "exposure_reachability",
+      "name": "Public mass exposure counts",
+      "description": "Public estimates of potentially vulnerable systems (counts from EASM/telemetry providers).",
+      "default_weight": 1,
+      "evidence_strength": "medium",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "publication_time",
+        "measurement_time_optional"
+      ],
+      "fields_schema": {
+        "count_optional": "integer|null",
+        "publication_time": "datetime",
+        "measurement_time_optional": "datetime|null",
+        "method_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "HIGH_BLAST_RADIUS_ROLE",
+      "group": "exposure_reachability",
+      "name": "High blast-radius role (trust-chain/control-plane)",
+      "description": "Component sits in a trust-chain/control-plane (identity, update/management, hypervisor mgmt, backup, etc.).",
+      "default_weight": 2,
+      "evidence_strength": "high",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "classification_time"
+      ],
+      "fields_schema": {
+        "role_class": "string",
+        "classification_time": "datetime"
+      }
+    },
+    {
+      "signal_type": "IOC_PUBLISHED_ATTEMPT_LEVEL",
+      "group": "compromise_evidence",
+      "name": "IoCs published (attempt-level)",
+      "description": "IoCs for exploitation attempts (request patterns, scanning IPs, URLs) are published.",
+      "default_weight": 1,
+      "evidence_strength": "medium",
+      "typical_lag": "low_to_medium",
+      "timestamp_fields": [
+        "publication_time"
+      ],
+      "fields_schema": {
+        "ioc_types_optional": "array|null",
+        "publication_time": "datetime"
+      }
+    },
+    {
+      "signal_type": "IOC_PUBLISHED_COMPROMISE_LEVEL",
+      "group": "compromise_evidence",
+      "name": "IoCs published (compromise-level)",
+      "description": "IoCs indicating successful compromise (webshell hashes/paths, implants, persistence).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "publication_time": "datetime",
+        "event_time_optional": "datetime|null",
+        "ioc_types_optional": "array|null"
+      }
+    },
+    {
+      "signal_type": "SEVERE_OUTCOMES_REPORTED",
+      "group": "compromise_evidence",
+      "name": "Severe outcomes reported",
+      "description": "Reports describe severe outcomes (domain takeover, supply-chain/code distribution, ransomware deployment, data exfil at scale).",
+      "default_weight": 3,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "publication_time",
+        "event_time_optional"
+      ],
+      "fields_schema": {
+        "outcomes": "array",
+        "publication_time": "datetime",
+        "event_time_optional": "datetime|null"
+      }
+    },
+    {
+      "signal_type": "PATCH_AVAILABLE",
+      "group": "remediation_dynamics",
+      "name": "Patch available",
+      "description": "Vendor patch or fixed version released.",
+      "default_weight": 1,
+      "evidence_strength": "high",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "release_time"
+      ],
+      "fields_schema": {
+        "release_time": "datetime",
+        "fixed_versions_optional": "array|null"
+      }
+    },
+    {
+      "signal_type": "MITIGATION_ONLY_WORKAROUND",
+      "group": "remediation_dynamics",
+      "name": "Mitigation-only (no patch yet)",
+      "description": "Only workaround/mitigation available; patch not yet released.",
+      "default_weight": 1,
+      "evidence_strength": "medium",
+      "typical_lag": "none",
+      "timestamp_fields": [
+        "publication_time"
+      ],
+      "fields_schema": {
+        "publication_time": "datetime",
+        "mitigations_optional": "array|null"
+      }
+    },
+    {
+      "signal_type": "OUT_OF_BAND_PATCH_RELEASED",
+      "group": "remediation_dynamics",
+      "name": "Out-of-band patch released",
+      "description": "Out-of-band release indicates urgency or active exploitation pressure.",
+      "default_weight": 1,
+      "evidence_strength": "medium_to_high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "release_time"
+      ],
+      "fields_schema": {
+        "release_time": "datetime"
+      }
+    },
+    {
+      "signal_type": "INCOMPLETE_FIX_OR_BYPASS",
+      "group": "remediation_dynamics",
+      "name": "Incomplete fix / bypass disclosed",
+      "description": "Evidence that initial patch was incomplete or bypass exists.",
+      "default_weight": 2,
+      "evidence_strength": "high",
+      "typical_lag": "medium",
+      "timestamp_fields": [
+        "publication_time"
+      ],
+      "fields_schema": {
+        "publication_time": "datetime",
+        "details_optional": "string|null"
+      }
+    },
+    {
+      "signal_type": "EPSS_SPIKE",
+      "group": "predictive_signals",
+      "name": "EPSS spike",
+      "description": "Significant EPSS increase above a chosen threshold.",
+      "default_weight": 1,
+      "evidence_strength": "low_to_medium",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "snapshot_time"
+      ],
+      "fields_schema": {
+        "snapshot_time": "datetime",
+        "epss": "number",
+        "delta_optional": "number|null"
+      }
+    },
+    {
+      "signal_type": "EPSS_ACCELERATION",
+      "group": "predictive_signals",
+      "name": "EPSS acceleration (ΔEPSS / Δ²EPSS)",
+      "description": "Rapid EPSS growth over short windows; early thermometric indicator.",
+      "default_weight": 1,
+      "evidence_strength": "low_to_medium",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "snapshot_time"
+      ],
+      "fields_schema": {
+        "snapshot_time": "datetime",
+        "delta_1d_optional": "number|null",
+        "delta_7d_optional": "number|null",
+        "accel_optional": "number|null"
+      }
+    },
+    {
+      "signal_type": "REFERENCE_BUZZ_HIGH",
+      "group": "buzz_interest",
+      "name": "High reference/mention volume",
+      "description": "High growth in references/mentions (repos/posts/advisories). Use only for Track/Prepare, not Urgent alone.",
+      "default_weight": 1,
+      "evidence_strength": "low",
+      "typical_lag": "low",
+      "timestamp_fields": [
+        "first_seen",
+        "most_recent_optional"
+      ],
+      "fields_schema": {
+        "first_seen": "datetime",
+        "most_recent_optional": "datetime|null",
+        "metric_optional": "string|null",
+        "value_optional": "number|null"
+      }
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2026-01-05",
+      "changes": [
+        "Added stage floor semantics (min_stage) for critical signals so stage cannot remain below a required minimum.",
+        "Added top-level stage_floors for tooling that prefers centralized policy.",
+        "No change to default weights."
+      ]
+    }
+  ],
+  "stage_floors": {
+    "Urgent Patch": [
+      "EXPLOITED_CATALOG_ADDED",
+      "WEAPONIZED_EXPLOIT_AVAILABLE",
+      "FRAMEWORK_MODULE_AVAILABLE"
+    ],
+    "Emergency / IR": [
+      "MDR_IR_CONFIRMED_INTRUSIONS",
+      "TELEMETRY_CONFIRMED_ITW",
+      "VENDOR_CONFIRMED_ITW",
+      "CERT_CSIRT_ALERT_ITW"
+    ]
+  },
+  "meta": {
+    "notes": "v1.3.0 adds KEV-neutral phase policy triggers (Track/Prepare) and optional vkev-only ignoring support."
+  },
+  "phase_policy": {
+    "version": "1.3.0",
+    "windows": {
+      "pressure_window": "7d",
+      "poc_pressure_window": "14d"
+    },
+    "baseline_signal_types": [
+      "VULN_PUBLISHED",
+      "RECORD_LAST_MODIFIED"
+    ],
+    "vkev_detection": {
+      "enabled_by_default": false,
+      "match_in": [
+        "source_url",
+        "comment"
+      ],
+      "substrings": [
+        "vulncheck",
+        "vkev"
+      ]
+    },
+    "signal_sets": {
+      "pre_exploitation_pressure": [
+        "SCAN_WAVE_INDICATOR",
+        "HONEYPOT_EXPLOIT_ATTEMPTS",
+        "COMMUNITY_TEMPLATE_ACTIVE_CHECK",
+        "IOC_PUBLISHED_ATTEMPT_LEVEL"
+      ],
+      "active_check_signals": [
+        "COMMUNITY_TEMPLATE_ACTIVE_CHECK",
+        "SCANNER_ACTIVE_CHECK"
+      ],
+      "attempt_telemetry": [
+        "SCAN_WAVE_INDICATOR",
+        "HONEYPOT_EXPLOIT_ATTEMPTS",
+        "IOC_PUBLISHED_ATTEMPT_LEVEL"
+      ],
+      "poc_signals": [
+        "PUBLIC_POC_RELEASED"
+      ],
+      "initial_access": [
+        "EXPLOIT_TYPE_INITIAL_ACCESS"
+      ],
+      "botnet_wormable": [
+        "BOTNET_WORMABLE_ASSOCIATION"
+      ]
+    },
+    "triggers": [
+      {
+        "id": "T1_track_on_multi_pressure",
+        "min_stage": "Track",
+        "logic": {
+          "type": "distinct_count_in_window",
+          "set": "pre_exploitation_pressure",
+          "window": "pressure_window",
+          "gte": 2
+        }
+      },
+      {
+        "id": "T2_prepare_on_initial_access_plus_pressure",
+        "min_stage": "Prepare",
+        "logic": {
+          "type": "and",
+          "all": [
+            {
+              "type": "seen",
+              "set": "initial_access"
+            },
+            {
+              "type": "any_in_window",
+              "set": "attempt_telemetry",
+              "window": "pressure_window"
+            }
+          ]
+        }
+      },
+      {
+        "id": "T3_prepare_on_botnet_plus_pressure",
+        "min_stage": "Prepare",
+        "logic": {
+          "type": "and",
+          "all": [
+            {
+              "type": "seen",
+              "set": "botnet_wormable"
+            },
+            {
+              "type": "any_in_window",
+              "set": "attempt_telemetry",
+              "window": "pressure_window"
+            }
+          ]
+        }
+      },
+      {
+        "id": "T4_prepare_on_poc_plus_active_check",
+        "min_stage": "Prepare",
+        "logic": {
+          "type": "and",
+          "all": [
+            {
+              "type": "seen",
+              "set": "poc_signals"
+            },
+            {
+              "type": "any_in_window",
+              "set": "active_check_signals",
+              "window": "poc_pressure_window"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
