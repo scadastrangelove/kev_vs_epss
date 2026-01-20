@@ -1,3 +1,17 @@
+# UPS: From Signals to Patch Queues (KEV-2025 + vKEV check)
+
+This repository contains the artifacts for the paper **“UPS Meets Patch Queues
+Evidence-timeline prioritization under limited capacity, cadence, and compliance gravity”**.
+
+The paper studies how different *evidence thresholds* (Watch+/Track+/Prepare+) affect (1) **shift-left** (patching before KEV inclusion) and (2) **operational workload** under capacity-bounded patch queues.
+
+**Author:** Sergey Gordeychik
+**Affiliation:** CyberOK
+**Year:** 2026
+
+[Full Paper](https://github.com/scadastrangelove/kev_vs_epss/blob/main/ups/UPS_Meets_Patch_Queues-publish.pdf)
+
+
 # EPSS vs Real-World Exploitation (KEV 2025)
 
 **Author:** Sergey Gordeychik
