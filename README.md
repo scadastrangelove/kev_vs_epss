@@ -5,6 +5,8 @@ Evidence-timeline prioritization under limited capacity, cadence, and compliance
 
 The paper studies how different *evidence thresholds* (Watch+/Track+/Prepare+) affect (1) **shift-left** (patching before KEV inclusion) and (2) **operational workload** under capacity-bounded patch queues.
 
+Modern vulnerability management must prioritize remediation under extreme disclosure volume and limited patch capacity. We introduce UPS (Urgent Patch Score), an evidence- driven phase model that treats vulnerability urgency as a timeline of verifiable signals rather than a static score. Using the CISA KEV 2025 cohort (N=245) as a high-precision exploited set and a capacity-constrained patch simulation, we show that UPS enables meaningful shift-left remediation without using KEV as a trigger: 35–53% of KEV-2025 items are patched by the KEV addition date. With moderate capacity (≥ 20 items/week), UPS achieves near-perfect 14-day KEV compliance, while tighter deadlines (7 days) are primarily limited by organizational cadence rather than raw capacity. Finally, we quantify the core operational trade-off: earlier admission policies increase workload inflation (an upper-bound overhead factor, defined as total items handled per KEV-2025 item handled; up to ∼5–8× under Watch+), whereas stricter thresholds (Track+/Prepare+) preserve much of the speed benefit at ∼2.6–2.8× overhead. These results suggest that evidence-timeline prioritization can provide a practical, tunable alternative to score-only approaches when capacity and governance constraints dominate outcomes.
+
 **Author:** Sergey Gordeychik
 **Affiliation:** CyberOK
 **Year:** 2026
