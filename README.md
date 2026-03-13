@@ -13,6 +13,14 @@ Modern vulnerability management must prioritize remediation under extreme disclo
 
 [Full Paper](https://github.com/scadastrangelove/kev_vs_epss/blob/main/ups/UPS_Meets_Patch_Queues-publish.pdf)
 
+# EPSS Meets UPS
+
+EPSS is widely used as a remediation gate: “patch everything above a threshold.” In earlier work we showed that EPSS-only gates face hard operational limits when judged against exploited ground truth and finite patch capacity. This paper asks a narrower and more pragmatic question: can EPSS still be useful as an early-warning signal inside an evidence-timeline phase model (UPS), without pretending it is a ground truth oracle?
+Using weekly EPSS snapshots from 2025 and UPS timelines, we define an early true positive as an EPSS alert that occurs strictly before the vulnerability reaches an Urgent Patch floor stage within the 2025 evaluation window. We evaluate percentile-threshold rules with optional persistence (k consecutive weeks) and an optional acceleration rule (∆percentile spike). We report a Pareto trade-off between early recall and workload inflation measured as false positives per positive (FP/positive), plus lead-time distributions for true early alerts.
+
+**Author:** Sergey Gordeychik
+**Affiliation:** CyberOK
+**Year:** 2026
 
 # EPSS vs Real-World Exploitation (KEV 2025)
 
