@@ -22,6 +22,9 @@ Using weekly EPSS snapshots from 2025 and UPS timelines, we define an early true
 **Affiliation:** CyberOK
 **Year:** 2026
 
+[Full Paper](https://github.com/scadastrangelove/kev_vs_epss/blob/main/EPSS%20Meets%20UPS.pdf)
+
+
 # EPSS vs Real-World Exploitation (KEV 2025)
 
 **Author:** Sergey Gordeychik
